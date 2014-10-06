@@ -5,15 +5,21 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.box = "dey/caliopen_full-ubuntu-14.04"
-  config.vm.box_version = "0.2.0"
+  config.vm.box = "chef/ubuntu-14.04"
   config.vm.network :private_network, ip: "192.168.10.10"
-  config.vm.synced_folder "./", "/vagrant", owner: "caliopen", group: "caliopen"
-  config.vm.provision :shell, path: ".vagrant/scripts/link-projects.sh"
+  config.vm.synced_folder "./", "/vagrant"
+  config.vm.hostname = "caliopen-fullstack"
+  config.vm.provision :ansible do |ansible|
+    ansible.groups = {
+      "backends" => ["default"],
+      "webservers" => ["default"]
+    }
+    ansible.sudo = true
+    ansible.playbook = "caliopen-ansible/single.yaml"
+  end
 
-  # uncomment following your needs (defaults: 1 cpu, 1024MB memory)
-  # config.vm.provider "virtualbox" do |v|
-  #     v.cpus = 2
-  #     v.memory = 2048
-  # end
+  # for now cassandra requires at min 2GB  to run cf. https://github.com/CaliOpen/caliopen.web/issues/3#issuecomment-54809578
+  config.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+  end
 end
